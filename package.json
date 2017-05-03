@@ -4,6 +4,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.48.0",
+    "gm": "^1.23.0",
     "haikunator": "^2.0.0",
     "node-fetch": "^1.6.3"
   },

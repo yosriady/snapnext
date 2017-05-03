@@ -7,7 +7,18 @@ module.exports.handler = (event, context, callback) => {
   const s3Key = event.Records[0].s3.object.key;
   console.log(`Triggered by S3 event ${s3Key}`);
 
-  const detectParams = {
+  const detectFacesParams = {
+    Image: {
+      S3Object: {
+        Bucket: process.env.IMAGES_BUCKET_NAME,
+        Name: s3Key,
+      },
+    },
+    Attributes: [
+      'ALL',
+    ],
+  };
+  const detectLabelsParams = {
     Image: {
       S3Object: {
         Bucket: process.env.IMAGES_BUCKET_NAME,
@@ -16,17 +27,16 @@ module.exports.handler = (event, context, callback) => {
     },
   };
   return Promise.all([
-    rek.detectFaces(detectParams).promise(),
-    rek.detectLabels(detectParams).promise(),
+    rek.detectFaces(detectFacesParams).promise(),
+    rek.detectLabels(detectLabelsParams).promise(),
   ])
     .then(([facialAnalysisResult, sceneAnalysisResult]) => {
       console.log('Analyzed images!');
       const putParams = {
         Item: {
-          id: (s3Key.replace('originals/', '')),
+          id: (s3Key.replace(`${process.env.ORIGINAL_FOLDER_NAME}/`, '')),
           facialAnalysis: facialAnalysisResult,
           sceneAnalysis: sceneAnalysisResult,
-          status: 'analyzed',
           timestamp: Date.now(),
         },
         TableName: process.env.IMAGES_TABLE_NAME,

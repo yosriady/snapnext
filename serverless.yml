@@ -20,6 +20,8 @@ service: snapnext
 custom:
   imagesBucketName: snapnext-images
   imagesTableName: snapnext-images
+  originalsFolderName: originals
+  processedFolderName: processed
 
 provider:
   name: aws
@@ -48,14 +50,27 @@ provider:
         - dynamodb:Query
         - dynamodb:GetItem
         - dynamodb:PutItem
+        - dynamodb:DescribeStream
+        - dynamodb:GetRecords
+        - dynamodb:GetShardIterator
+        - dynamodb:ListStreams
       Resource:
         - Fn::Join:
           - ""
           - - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:"
             - "table/${self:custom.imagesTableName}"
+        - Fn::Join:
+          - ""
+          - - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:"
+            - "table/${self:custom.imagesTableName}/stream/*"
+        # - Fn::GetAtt:
+        #   - ImagesTable
+        #   - StreamArn
   environment:
     IMAGES_BUCKET_NAME: ${self:custom.imagesBucketName}
     IMAGES_TABLE_NAME: ${self:custom.imagesTableName}
+    ORIGINAL_FOLDER_NAME: ${self:custom.originalsFolderName}
+    PROCESSED_FOLDER_NAME: ${self:custom.processedFolderName}
 
 # you can add packaging information here
 package:
@@ -85,6 +100,18 @@ functions:
     package:
       include:
         - functions/analyzeImage.js
+  processImage:
+    handler: functions/processImage.handler
+    # events:
+    #   - stream:
+    #       type: dynamodb
+    #       arn:
+    #         Fn::GetAtt:
+    #           - ImagesTable
+    #           - StreamArn
+    package:
+      include:
+        - functions/processImage.js
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -121,6 +148,7 @@ resources:
   ImagesTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
+      TableName: ${self:custom.imagesTableName}
       AttributeDefinitions:
         -
           AttributeName: id
@@ -138,13 +166,44 @@ resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
-      TableName: ${self:custom.imagesTableName}
+      StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+  ProcessImageEventSourceMappingDynamodbSnapnextimages:
+    Type: AWS::Lambda::EventSourceMapping
+    DependsOn: IamPolicyLambdaExecution
+    Properties:
+      BatchSize: 10
+      EventSourceArn:
+        Fn::GetAtt:
+          - ImagesTable
+          - StreamArn
+      FunctionName:
+        Fn::GetAtt:
+          - ProcessImageLambdaFunction
+          - Arn
+      StartingPosition: TRIM_HORIZON
+      Enabled: True
   #  ImagesBucket:
   #    Type: AWS::S3::Bucket
   #    Properties:
   #      BucketName: ${self:custom.imagesBucketName}
   #      AccessControl: PublicRead
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+ Outputs:
+  ImagesTableArn:
+    Description: ARN of the ImagesTable
+    Value:
+      Fn::Join:
+      - ":"
+      - - arn
+        - aws
+        - dynamodb
+        - Ref: AWS::Region
+        - Ref: AWS::AccountId
+        - table/${self:custom.imagesTableName}
+
+  ImagesTableStreamArn:
+    Description: ARN of the ImagesTableStream
+    Value:
+      Fn::GetAtt:
+      - ImagesTable
+      - StreamArn

@@ -24,7 +24,7 @@ module.exports.handler = (event, context, callback) => {
       console.log(`Uploading object to s3 bucket ${bucketName}`);
       return s3.putObject({
         Bucket: bucketName,
-        Key: `${imageId}.png`,
+        Key: `originals/${imageId}.png`,
         Body: buffer,
         ACL: 'public-read',
       }).promise()

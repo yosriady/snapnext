@@ -19,6 +19,7 @@ service: snapnext
 
 custom:
   imagesBucketName: snapnext-images
+  imagesTableName: snapnext-images
 
 provider:
   name: aws
@@ -36,8 +37,25 @@ provider:
         - ""
         - - "arn:aws:s3:::"
           - "${self:custom.imagesBucketName}/*"
+    - Effect: Allow
+      Action:
+        - rekognition:DetectFaces
+        - rekognition:DetectLabels
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource:
+        - Fn::Join:
+          - ""
+          - - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:"
+            - "table/${self:custom.imagesTableName}"
   environment:
     IMAGES_BUCKET_NAME: ${self:custom.imagesBucketName}
+    IMAGES_TABLE_NAME: ${self:custom.imagesTableName}
 
 # you can add packaging information here
 package:
@@ -56,6 +74,17 @@ functions:
     package:
       include:
         - functions/downloadImage.js
+  analyzeImage:
+    handler: functions/analyzeImage.handler
+    events:
+      - s3:
+          bucket: ${self:custom.imagesBucketName}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: originals/
+    package:
+      include:
+        - functions/analyzeImage.js
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -89,11 +118,32 @@ functions:
 # you can add CloudFormation resource templates here
 resources:
  Resources:
-   ImagesBucket:
-     Type: AWS::S3::Bucket
-     Properties:
-       BucketName: ${self:custom.imagesBucketName}
-       AccessControl: PublicRead
+  ImagesTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: id
+          AttributeType: S
+        -
+          AttributeName: timestamp
+          AttributeType: N
+      KeySchema:
+        -
+          AttributeName: id
+          KeyType: HASH
+        -
+          AttributeName: timestamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      TableName: ${self:custom.imagesTableName}
+  #  ImagesBucket:
+  #    Type: AWS::S3::Bucket
+  #    Properties:
+  #      BucketName: ${self:custom.imagesBucketName}
+  #      AccessControl: PublicRead
 #  Outputs:
 #     NewOutput:
 #       Description: "Description for the output"

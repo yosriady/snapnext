@@ -6,6 +6,7 @@
     "aws-sdk": "^2.48.0",
     "gm": "^1.23.0",
     "haikunator": "^2.0.0",
+    "lodash": "^4.17.4",
     "node-fetch": "^1.6.3"
   },
   "devDependencies": {

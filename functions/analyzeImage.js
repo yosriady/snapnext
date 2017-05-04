@@ -5,6 +5,7 @@ const db = new AWS.DynamoDB.DocumentClient();
 
 module.exports.handler = (event, context, callback) => {
   const s3Key = event.Records[0].s3.object.key;
+  const imageId = (s3Key.replace(`${process.env.ORIGINAL_FOLDER_NAME}/`, '').replace('.png', ''));
   console.log(`Triggered by S3 event ${s3Key}`);
 
   const detectFacesParams = {
@@ -34,7 +35,7 @@ module.exports.handler = (event, context, callback) => {
       console.log('Analyzed images!');
       const putParams = {
         Item: {
-          id: (s3Key.replace(`${process.env.ORIGINAL_FOLDER_NAME}/`, '')),
+          id: imageId,
           facialAnalysis: facialAnalysisResult,
           sceneAnalysis: sceneAnalysisResult,
           timestamp: Date.now(),
@@ -46,6 +47,10 @@ module.exports.handler = (event, context, callback) => {
     })
     .then(() => {
       console.log('Inserted analysis results to DB!');
-      callback(null, { success: true });
+      const response = {
+        statusCode: 201,
+        body: JSON.stringify({ success: true }),
+      };
+      callback(null, response);
     });
 };

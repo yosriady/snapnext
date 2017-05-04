@@ -48,6 +48,7 @@ provider:
       Action:
         - dynamodb:DescribeTable
         - dynamodb:Query
+        - dynamodb:Scan
         - dynamodb:GetItem
         - dynamodb:PutItem
         - dynamodb:DescribeStream
@@ -63,9 +64,6 @@ provider:
           - ""
           - - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:"
             - "table/${self:custom.imagesTableName}/stream/*"
-        # - Fn::GetAtt:
-        #   - ImagesTable
-        #   - StreamArn
   environment:
     IMAGES_BUCKET_NAME: ${self:custom.imagesBucketName}
     IMAGES_TABLE_NAME: ${self:custom.imagesTableName}
@@ -102,6 +100,8 @@ functions:
         - functions/analyzeImage.js
   processImage:
     handler: functions/processImage.handler
+    # There's a bug for the below syntax so a manual EventSourceMapping is
+    # created in the 'Resources' section of this file.
     # events:
     #   - stream:
     #       type: dynamodb
@@ -112,6 +112,24 @@ functions:
     package:
       include:
         - functions/processImage.js
+  viewImage:
+    handler: functions/viewImage.handler
+    events:
+      - http:
+          path: images/{id}
+          method: get
+    package:
+      include:
+        - functions/viewImage.js
+  viewImages:
+    handler: functions/viewImages.handler
+    events:
+      - http:
+          path: images
+          method: get
+    package:
+      include:
+        - functions/viewImages.js
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -153,16 +171,10 @@ resources:
         -
           AttributeName: id
           AttributeType: S
-        -
-          AttributeName: timestamp
-          AttributeType: N
       KeySchema:
         -
           AttributeName: id
           KeyType: HASH
-        -
-          AttributeName: timestamp
-          KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1

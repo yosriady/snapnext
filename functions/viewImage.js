@@ -15,6 +15,7 @@ module.exports.handler = (event, context, callback) => {
   };
   return db.get(params).promise()
     .then(({ Item }) => {
+      console.log(Item);
       const body = {
         id: imageId,
         original: `https://s3.amazonaws.com/${process.env.IMAGES_BUCKET_NAME}/${process.env.ORIGINAL_FOLDER_NAME}/${imageId}.png`,
@@ -29,6 +30,7 @@ module.exports.handler = (event, context, callback) => {
         statusCode: 200,
         body: JSON.stringify(body),
       };
+      console.log(response);
       callback(null, response);
     });
 };

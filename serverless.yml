@@ -71,11 +71,11 @@ provider:
     PROCESSED_FOLDER_NAME: ${self:custom.processedFolderName}
 
 # you can add packaging information here
-package:
-  individually: true
-  exclude:
-    - functions/**
-    - yarn.lock
+# package:
+#   individually: true
+#   exclude:
+#     - functions/**
+#     - yarn.lock
 
 functions:
   downloadImage:
@@ -84,9 +84,9 @@ functions:
       - http:
           path: images
           method: post
-    package:
-      include:
-        - functions/downloadImage.js
+    # package:
+    #   include:
+    #     - functions/downloadImage.js
   analyzeImage:
     handler: functions/analyzeImage.handler
     events:
@@ -95,41 +95,41 @@ functions:
           event: s3:ObjectCreated:*
           rules:
             - prefix: originals/
-    package:
-      include:
-        - functions/analyzeImage.js
+    # package:
+    #   include:
+    #     - functions/analyzeImage.js
   processImage:
     handler: functions/processImage.handler
     # There's a bug for the below syntax so a manual EventSourceMapping is
     # created in the 'Resources' section of this file.
-    # events:
-    #   - stream:
-    #       type: dynamodb
-    #       arn:
-    #         Fn::GetAtt:
-    #           - ImagesTable
-    #           - StreamArn
-    package:
-      include:
-        - functions/processImage.js
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt:
+              - ImagesTable
+              - StreamArn
+    # package:
+    #   include:
+    #     - functions/processImage.js
   viewImage:
     handler: functions/viewImage.handler
     events:
       - http:
           path: images/{id}
           method: get
-    package:
-      include:
-        - functions/viewImage.js
+    # package:
+    #   include:
+    #     - functions/viewImage.js
   viewImages:
     handler: functions/viewImages.handler
     events:
       - http:
           path: images
           method: get
-    package:
-      include:
-        - functions/viewImages.js
+    # package:
+    #   include:
+    #     - functions/viewImages.js
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
@@ -180,21 +180,21 @@ resources:
         WriteCapacityUnits: 1
       StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
-  ProcessImageEventSourceMappingDynamodbSnapnextimages:
-    Type: AWS::Lambda::EventSourceMapping
-    DependsOn: IamPolicyLambdaExecution
-    Properties:
-      BatchSize: 10
-      EventSourceArn:
-        Fn::GetAtt:
-          - ImagesTable
-          - StreamArn
-      FunctionName:
-        Fn::GetAtt:
-          - ProcessImageLambdaFunction
-          - Arn
-      StartingPosition: TRIM_HORIZON
-      Enabled: True
+  # ProcessImageEventSourceMappingDynamodbSnapnextimages:
+  #   Type: AWS::Lambda::EventSourceMapping
+  #   DependsOn: IamPolicyLambdaExecution
+  #   Properties:
+  #     BatchSize: 10
+  #     EventSourceArn:
+  #       Fn::GetAtt:
+  #         - ImagesTable
+  #         - StreamArn
+  #     FunctionName:
+  #       Fn::GetAtt:
+  #         - ProcessImageLambdaFunction
+  #         - Arn
+  #     StartingPosition: TRIM_HORIZON
+  #     Enabled: True
   #  ImagesBucket:
   #    Type: AWS::S3::Bucket
   #    Properties:

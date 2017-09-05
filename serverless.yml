@@ -1,21 +1,4 @@
-# Welcome to Serverless!
-#
-# This file is the main config file for your service.
-# It's very minimal at this point and uses default values.
-# You can always add more config options for more control.
-# We've included some commented out config examples here.
-# Just uncomment any of them to get that config option.
-#
-# For full config options, check the docs:
-#    docs.serverless.com
-#
-# Happy Coding!
-
 service: snapnext
-
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
-# frameworkVersion: "=X.X.X"
 
 custom:
   imagesBucketName: snapnext-images
@@ -26,9 +9,8 @@ custom:
 provider:
   name: aws
   runtime: nodejs6.10
-  #  stage: dev
-  #  region: us-east-1
-  iamRoleStatements:
+  stage: ${process.ENV.STAGE}
+  iamRoleStatements: # IAM permissions granted to all functions
     - Effect: Allow
       Action:
         - S3:GetObject
@@ -70,13 +52,6 @@ provider:
     ORIGINAL_FOLDER_NAME: ${self:custom.originalsFolderName}
     PROCESSED_FOLDER_NAME: ${self:custom.processedFolderName}
 
-# you can add packaging information here
-# package:
-#   individually: true
-#   exclude:
-#     - functions/**
-#     - yarn.lock
-
 functions:
   downloadImage:
     handler: functions/downloadImage.handler
@@ -84,9 +59,6 @@ functions:
       - http:
           path: images
           method: post
-    # package:
-    #   include:
-    #     - functions/downloadImage.js
   analyzeImage:
     handler: functions/analyzeImage.handler
     events:
@@ -95,13 +67,8 @@ functions:
           event: s3:ObjectCreated:*
           rules:
             - prefix: originals/
-    # package:
-    #   include:
-    #     - functions/analyzeImage.js
   processImage:
     handler: functions/processImage.handler
-    # There's a bug for the below syntax so a manual EventSourceMapping is
-    # created in the 'Resources' section of this file.
     events:
       - stream:
           type: dynamodb
@@ -109,58 +76,19 @@ functions:
             Fn::GetAtt:
               - ImagesTable
               - StreamArn
-    # package:
-    #   include:
-    #     - functions/processImage.js
   viewImage:
     handler: functions/viewImage.handler
     events:
       - http:
           path: images/{id}
           method: get
-    # package:
-    #   include:
-    #     - functions/viewImage.js
   viewImages:
     handler: functions/viewImages.handler
     events:
       - http:
           path: images
           method: get
-    # package:
-    #   include:
-    #     - functions/viewImages.js
 
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
-#    events:
-#      - http:
-#          path: users/create
-#          method: get
-#      - s3: ${env:BUCKET}
-#      - schedule: rate(10 minutes)
-#      - sns: greeter-topic
-#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
-#      - alexaSkill
-#      - iot:
-#          sql: "SELECT * FROM 'some_topic'"
-#      - cloudwatchEvent:
-#          event:
-#            source:
-#              - "aws.ec2"
-#            detail-type:
-#              - "EC2 Instance State-change Notification"
-#            detail:
-#              state:
-#                - pending
-#      - cloudwatchLog: '/aws/lambda/hello'
-
-#    Define function environment variables here
-#    environment:
-#      variable2: value2
-
-# you can add CloudFormation resource templates here
 resources:
  Resources:
   ImagesTable:
@@ -180,21 +108,6 @@ resources:
         WriteCapacityUnits: 1
       StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
-  # ProcessImageEventSourceMappingDynamodbSnapnextimages:
-  #   Type: AWS::Lambda::EventSourceMapping
-  #   DependsOn: IamPolicyLambdaExecution
-  #   Properties:
-  #     BatchSize: 10
-  #     EventSourceArn:
-  #       Fn::GetAtt:
-  #         - ImagesTable
-  #         - StreamArn
-  #     FunctionName:
-  #       Fn::GetAtt:
-  #         - ProcessImageLambdaFunction
-  #         - Arn
-  #     StartingPosition: TRIM_HORIZON
-  #     Enabled: True
   #  ImagesBucket:
   #    Type: AWS::S3::Bucket
   #    Properties:

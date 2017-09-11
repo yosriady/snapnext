@@ -1,15 +1,15 @@
-service: snapnext
+service: serverless-pipeline
 
 custom:
-  imagesBucketName: snapnext-images
-  imagesTableName: snapnext-images
+  imagesBucketName: serverless-pipeline-images
+  imagesTableName: serverless-pipeline-images
   originalsFolderName: originals
   processedFolderName: processed
 
 provider:
   name: aws
   runtime: nodejs6.10
-  stage: ${process.ENV.STAGE}
+  stage: dev
   iamRoleStatements: # IAM permissions granted to all functions
     - Effect: Allow
       Action:
@@ -108,11 +108,11 @@ resources:
         WriteCapacityUnits: 1
       StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
-  #  ImagesBucket:
-  #    Type: AWS::S3::Bucket
-  #    Properties:
-  #      BucketName: ${self:custom.imagesBucketName}
-  #      AccessControl: PublicRead
+  # ImagesBucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #     BucketName: ${self:custom.imagesBucketName}
+  #     AccessControl: PublicRead
  Outputs:
   ImagesTableArn:
     Description: ARN of the ImagesTable

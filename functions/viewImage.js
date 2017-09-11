@@ -18,8 +18,8 @@ module.exports.handler = (event, context, callback) => {
       console.log(Item);
       const body = {
         id: imageId,
-        original: `https://s3.amazonaws.com/${process.env.IMAGES_BUCKET_NAME}/${process.env.ORIGINAL_FOLDER_NAME}/${imageId}.png`,
-        processed: `https://s3.amazonaws.com/${process.env.IMAGES_BUCKET_NAME}/${process.env.PROCESSED_FOLDER_NAME}/${imageId}.png`,
+        original: `https://s3.amazonaws.com/${process.env.IMAGES_BUCKET_NAME}/${process.env.ORIGINAL_FOLDER_NAME}/${imageId}`,
+        processed: `https://s3.amazonaws.com/${process.env.IMAGES_BUCKET_NAME}/${process.env.PROCESSED_FOLDER_NAME}/${imageId}`,
         timestamp: Item.timestamp,
         analysis: {
           facial: Item.facialAnalysis,

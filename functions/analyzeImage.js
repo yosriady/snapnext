@@ -5,7 +5,7 @@ const db = new AWS.DynamoDB.DocumentClient();
 
 module.exports.handler = (event, context, callback) => {
   const s3Key = event.Records[0].s3.object.key;
-  const imageId = (s3Key.replace(`${process.env.ORIGINAL_FOLDER_NAME}/`, '').replace('.png', ''));
+  const imageId = s3Key.replace(`${process.env.ORIGINAL_FOLDER_NAME}/`, '');
   console.log(`Triggered by S3 event ${s3Key}`);
 
   const detectFacesParams = {

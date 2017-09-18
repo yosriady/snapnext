@@ -19,25 +19,13 @@ module.exports.handler = (event, context, callback) => {
       'ALL',
     ],
   };
-  const detectLabelsParams = {
-    Image: {
-      S3Object: {
-        Bucket: process.env.IMAGES_BUCKET_NAME,
-        Name: s3Key,
-      },
-    },
-  };
-  return Promise.all([
-    rek.detectFaces(detectFacesParams).promise(),
-    rek.detectLabels(detectLabelsParams).promise(),
-  ])
-    .then(([facialAnalysisResult, sceneAnalysisResult]) => {
+  return rek.detectFaces(detectFacesParams).promise()
+    .then((facialAnalysisResult) => {
       console.log('Analyzed images!');
       const putParams = {
         Item: {
           id: imageId,
           facialAnalysis: facialAnalysisResult,
-          sceneAnalysis: sceneAnalysisResult,
           timestamp: Date.now(),
         },
         TableName: process.env.IMAGES_TABLE_NAME,

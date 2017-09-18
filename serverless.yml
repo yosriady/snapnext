@@ -24,7 +24,6 @@ provider:
     - Effect: Allow
       Action:
         - rekognition:DetectFaces
-        - rekognition:DetectLabels
       Resource: "*"
     - Effect: Allow
       Action:

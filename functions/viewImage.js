@@ -32,5 +32,13 @@ module.exports.handler = (event, context, callback) => {
       };
       console.log(response);
       callback(null, response);
+    })
+    .catch((err) => {
+      const response = {
+        statusCode: 500,
+        error: err.message,
+      };
+      console.log(err.message);
+      callback(null, response);
     });
 };
